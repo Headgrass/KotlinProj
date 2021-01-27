@@ -3,14 +3,22 @@ package ru.geekbrains.kotlinproj.ui
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import ru.geekbrains.kotlinproj.R
 import ru.geekbrains.kotlinproj.databinding.ActivityNoteBinding
 import ru.geekbrains.kotlinproj.model.Color
 import ru.geekbrains.kotlinproj.model.Note
+import ru.geekbrains.kotlinproj.viewmodel.NoteViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+
+private const val SAVE_DELAY = 2000L
 
 class NoteActivity : AppCompatActivity() {
 
@@ -25,11 +33,29 @@ class NoteActivity : AppCompatActivity() {
 
     private var note: Note? = null
     private lateinit var ui: ActivityNoteBinding
+    private lateinit var viewModel: NoteViewModel
+    private val textChangeListener = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            triggerSaveNote()
+        }
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            //do nothing
+        }
+
+        override fun afterTextChanged(s: Editable?) {
+            //do nothing
+        }
+
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ui = ActivityNoteBinding.inflate(layoutInflater)
         setContentView(ui.root)
+
+        viewModel = ViewModelProvider(this).get(NoteViewModel::class.java)
 
         note = intent.getParcelableExtra(EXTRA_NOTE)
         setSupportActionBar(findViewById(R.id.toolbar))
@@ -59,6 +85,9 @@ class NoteActivity : AppCompatActivity() {
         }
 
         ui.toolbar.setBackgroundColor(resources.getColor(color))
+        ui.titleEt.addTextChangedListener(textChangeListener)
+        ui.bodyEt.addTextChangedListener(textChangeListener)
+
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
@@ -67,6 +96,31 @@ class NoteActivity : AppCompatActivity() {
             true
         }
         else -> super.onOptionsItemSelected(item)
+    }
+
+
+    private fun createNewNote(): Note = Note(
+        UUID.randomUUID().toString(),
+        ui.titleEt.text.toString(),
+        ui.bodyEt.text.toString()
+    )
+
+
+    private fun triggerSaveNote() {
+        if (ui.titleEt.text == null || ui.titleEt.text!!.length < 3) return
+
+        Handler(Looper.getMainLooper()).postDelayed(object : Runnable {
+            override fun run() {
+                note = note?.copy(
+                    title = ui.titleEt.text.toString(),
+                    note = ui.bodyEt.text.toString(),
+                    lastChanged = Date()
+                ) ?: createNewNote()
+
+                if (note != null) viewModel.saveChanges(note!!)
+            }
+
+        }, SAVE_DELAY)
     }
 }
 

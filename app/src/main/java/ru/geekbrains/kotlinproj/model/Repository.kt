@@ -53,6 +53,9 @@ object Repository {
             color = Color.VIOLET
         )
     )
+    init {
+        notesLiveData.value = notes
+    }
 
 
     fun getNotes(): LiveData<List<Note>> = notesLiveData
