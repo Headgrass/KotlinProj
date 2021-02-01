@@ -59,7 +59,7 @@ object Repository {
 
 
     fun getNotes(): LiveData<List<Note>> = notesLiveData
-    ;
+
     fun saveNote(note: Note) {
         addOrReplace(note)
         notesLiveData.value = notes
