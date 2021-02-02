@@ -1,11 +1,15 @@
 package ru.geekbrains.kotlinproj.viewmodel
 
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import ru.geekbrains.kotlinproj.model.Note
+import ru.geekbrains.kotlinproj.model.NoteResult
 import ru.geekbrains.kotlinproj.model.Repository
+import ru.geekbrains.kotlinproj.ui.BaseViewModel
+import ru.geekbrains.kotlinproj.ui.NoteViewState
 
 
-class NoteViewModel(private val repository: Repository = Repository) : ViewModel() {
+class NoteViewModel(val repository: Repository = Repository) :BaseViewModel<Note?, NoteViewState>() {
 
     private var pendingNote: Note? = null
 
@@ -18,4 +22,20 @@ class NoteViewModel(private val repository: Repository = Repository) : ViewModel
             repository.saveNote(pendingNote!!)
         }
     }
+
+    fun loadNote(noteId: String) {
+        repository.getNoteById(noteId).observeForever(object : Observer<NoteResult> {
+            override fun onChanged(t: NoteResult?) {
+                if (t == null) return
+
+                when (t) {
+                    is NoteResult.Success<*> ->
+                        viewStateLiveData.value = NoteViewState(note = t.data as? Note)
+                    is NoteResult.Error ->
+                        viewStateLiveData.value = NoteViewState(error = t.error)
+                }
+            }
+        })
+    }
+
 }
