@@ -32,7 +32,7 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
     }
 
     private var note: Note? = null
-    private lateinit var ui: ActivityNoteBinding
+    override lateinit var ui: ActivityNoteBinding
     override val viewModel: NoteViewModel by lazy { ViewModelProvider(this).get(NoteViewModel::class.java) }
     override val layoutRes: Int = R.layout.activity_main
     private val textChangeListener = object : TextWatcher {
@@ -56,33 +56,27 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
         ui = ActivityNoteBinding.inflate(layoutInflater)
 
         val noteId = intent.getStringExtra(EXTRA_NOTE)
-       noteId?.let {
-           viewModel.loadNote(it)
-       }
-        if (noteId == null) supportActionBar?.title = getString(R.string.new_note_title)
-
-        initView()
+        noteId?.let {
+            viewModel.loadNote(it)
+        } ?: run {
+            supportActionBar?.title = getString(R.string.new_note_title)
+        }
+        ui.titleEt.addTextChangedListener(textChangeListener)
+        ui.bodyEt.addTextChangedListener(textChangeListener)
     }
 
     private fun initView() {
-        ui.titleEt.setText(note?.title ?: "")
-        ui.bodyEt.setText(note?.note ?: "")
+        note?.run {
+            ui.toolbar.setBackgroundColor(color.getColorInt(this@NoteActivity))
 
-        val color = when (note?.color) {
-            Color.WHITE -> R.color.color_white
-            Color.VIOLET -> R.color.color_violet
-            Color.YELLOW -> R.color.color_yello
-            Color.RED -> R.color.color_red
-            Color.PINK -> R.color.color_pink
-            Color.GREEN -> R.color.color_green
-            Color.BLUE, Color.GREEN -> R.color.color_blue
-            else -> R.color.color_white
+            ui.titleEt.setText(title)
+            ui.bodyEt.setText(note)
+
+            supportActionBar?.title = lastChanged.format()
+
         }
-
-        ui.toolbar.setBackgroundColor(resources.getColor(color))
         ui.titleEt.addTextChangedListener(textChangeListener)
         ui.bodyEt.addTextChangedListener(textChangeListener)
-
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
@@ -104,17 +98,14 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
     private fun triggerSaveNote() {
         if (ui.titleEt.text == null || ui.titleEt.text!!.length < 3) return
 
-        Handler(Looper.getMainLooper()).postDelayed(object : Runnable {
-            override fun run() {
-                note = note?.copy(
-                    title = ui.titleEt.text.toString(),
-                    note = ui.bodyEt.text.toString(),
-                    lastChanged = Date()
-                ) ?: createNewNote()
+        Handler(Looper.getMainLooper()).postDelayed({
+            note = note?.copy(
+                title = ui.titleEt.text.toString(),
+                note = ui.bodyEt.text.toString(),
+                lastChanged = Date()
+            ) ?: createNewNote()
 
-                if (note != null) viewModel.saveChanges(note!!)
-            }
-
+            if (note != null) viewModel.saveChanges(note!!)
         }, SAVE_DELAY)
     }
 

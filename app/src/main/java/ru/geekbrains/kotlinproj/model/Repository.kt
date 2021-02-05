@@ -2,12 +2,10 @@ package ru.geekbrains.kotlinproj.model
 
 object Repository {
 
-    private val remoteDataProvider: RemoteDataProvider = FireStoreProvider()
+    private val remoteProvider: RemoteDataProvider = FireStoreProvider()
 
-    fun getNotes() = remoteDataProvider.subscribeToAllNotes()
-
-    fun saveNote(note: Note) = remoteDataProvider.saveNote(note)
-
-    fun getNoteById(id: String) = remoteDataProvider.getNoteById(id)
-
+    fun getNotes() = remoteProvider.subscribeToAllNotes()
+    fun saveNote(note: Note) = remoteProvider.saveNote(note)
+    fun getNoteById(id: String) = remoteProvider.getNoteById(id)
+    fun getCurrentUser() = remoteProvider.getCurrentUser()
 }
