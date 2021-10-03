@@ -15,4 +15,8 @@ class MainActivity : AppCompatActivity() {
             (viewButton as Button).text = "PRESSED"
         }
     }
+    
+    override fun onRun() {
+        super.onRun();
+    }
 }
